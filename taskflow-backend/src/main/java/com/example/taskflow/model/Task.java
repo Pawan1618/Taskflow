@@ -1,10 +1,8 @@
 package com.example.taskflow.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,9 +12,6 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "tasks")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Task {
 
     @Id
@@ -48,11 +43,13 @@ public class Task {
     private LocalDateTime updatedAt;
 
     // Many tasks belong to one project
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
     // Many tasks can be assigned to one user
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
@@ -75,4 +72,53 @@ public class Task {
     public enum TaskPriority {
         LOW, MEDIUM, HIGH
     }
+
+    // ── Constructors ──────────────────────────────────────────────────
+    public Task() {}
+
+    public Task(Long id, String title, String description, TaskStatus status, TaskPriority priority,
+                LocalDate dueDate, LocalDateTime createdAt, LocalDateTime updatedAt,
+                Project project, User assignedTo) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.priority = priority;
+        this.dueDate = dueDate;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.project = project;
+        this.assignedTo = assignedTo;
+    }
+
+    // ── Getters & Setters ─────────────────────────────────────────────
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public TaskStatus getStatus() { return status; }
+    public void setStatus(TaskStatus status) { this.status = status; }
+
+    public TaskPriority getPriority() { return priority; }
+    public void setPriority(TaskPriority priority) { this.priority = priority; }
+
+    public LocalDate getDueDate() { return dueDate; }
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Project getProject() { return project; }
+    public void setProject(Project project) { this.project = project; }
+
+    public User getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(User assignedTo) { this.assignedTo = assignedTo; }
 }
