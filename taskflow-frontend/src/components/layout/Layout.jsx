@@ -2,18 +2,16 @@ import React from 'react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-const Layout = ({ children }) => {
+export default function Layout({ children }) {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
         <Navbar />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+        <main className="tf-page">
           {children}
         </main>
       </div>
     </div>
   );
-};
-
-export default Layout;
+}
