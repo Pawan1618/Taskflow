@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # The Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: taskflow-db
+    environment:
+      POSTGRES_DB: taskflowdb
+      POSTGRES_USER: taskflow_user
+      POSTGRES_PASSWORD: taskflow_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # The Backend Service
+  backend:
+    build:
+      context: ./taskflow-backend
+      dockerfile: Dockerfile
+    container_name: taskflow-backend
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      # Override Spring Boot properties to use Postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/taskflowdb
+      - SPRING_DATASOURCE_USERNAME=taskflow_user
+      - SPRING_DATASOURCE_PASSWORD=taskflow_password
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # The Frontend Service
+  frontend:
+    build:
+      context: ./taskflow-frontend
+      dockerfile: Dockerfile
+    container_name: taskflow-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# Define the named volume so data persists across container restarts
+volumes:
+  pgdata:

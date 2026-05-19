@@ -1,7 +1,7 @@
 # =============================================
-# Stage 1: Build — uses Maven to compile and package the application
+# Stage 1: Build — uses Maven + JDK 21 to compile and package
 # =============================================
-FROM eclipse-temurin:17-jdk-alpine AS builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
@@ -16,15 +16,15 @@ RUN apk add --no-cache maven && \
 # =============================================
 # Stage 2: Run — lightweight JRE-only image
 # =============================================
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
 # Copy the compiled JAR from the builder stage
-COPY --from=builder /app/target/*.jar taskflow.jar
+COPY --from=builder /app/target/taskflow-1.0.0.jar taskflow.jar
 
 # Expose application port
-EXPOSE 8080
+EXPOSE 8081
 
-# Run the application
+# Run the Spring Boot application
 ENTRYPOINT ["java", "-jar", "taskflow.jar"]

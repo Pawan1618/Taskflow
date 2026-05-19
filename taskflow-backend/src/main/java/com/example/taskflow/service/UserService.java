@@ -2,10 +2,12 @@ package com.example.taskflow.service;
 
 import com.example.taskflow.model.User;
 import com.example.taskflow.repository.UserRepository;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service layer for User business logic.
@@ -32,7 +34,25 @@ public class UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email already in use: " + user.getEmail());
         }
+        
+        // Hash password before saving
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+        }
+        
         return userRepository.save(user);
+    }
+
+    // Authenticate user
+    public User authenticate(String email, String rawPassword) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (BCrypt.checkpw(rawPassword, user.getPassword())) {
+                return user;
+            }
+        }
+        throw new RuntimeException("Invalid email or password");
     }
 
     // Update existing user details
