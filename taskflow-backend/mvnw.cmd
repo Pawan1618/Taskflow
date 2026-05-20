@@ -1,5 +1,8 @@
 <# : batch portion
 @REM ----------------------------------------------------------------------------
+@REM Local Override: Use JDK 25 for this project to avoid conflicts with global Java 8 Hadoop configurations
+@SET "JAVA_HOME=C:\Program Files\Java\jdk-25.0.2"
+@REM ----------------------------------------------------------------------------
 @REM Licensed to the Apache Software Foundation (ASF) under one
 @REM or more contributor license agreements.  See the NOTICE file
 @REM distributed with this work for additional information
