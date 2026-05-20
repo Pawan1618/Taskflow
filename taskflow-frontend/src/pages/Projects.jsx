@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext';
 import ProjectModal from '../components/ProjectModal';
 import { Plus, FolderOpen, Pencil, Trash2, ArrowRight, CheckSquare, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSearch } from '../context/SearchContext';
 
 const PROJECT_COLORS = ['#0052CC','#00875A','#FF5630','#6554C0','#FF8B00','#00B8D9'];
 const avatarColor = (name = '') => PROJECT_COLORS[name.charCodeAt(0) % PROJECT_COLORS.length];
@@ -19,6 +20,7 @@ const FILTERS = ['ALL', 'ACTIVE', 'COMPLETED', 'ARCHIVED'];
 export default function Projects() {
   const toast    = useToast();
   const navigate = useNavigate();
+  const { searchQuery } = useSearch();
   const [projects,     setProjects]     = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [modal,        setModal]        = useState(null);
@@ -33,7 +35,16 @@ export default function Projects() {
 
   useEffect(() => { load(); }, []);
 
-  const visible = filterStatus === 'ALL' ? projects : projects.filter(p => p.status === filterStatus);
+  const visible = projects.filter(p => {
+    if (filterStatus !== 'ALL' && p.status !== filterStatus) return false;
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      const matchName = p.name?.toLowerCase().includes(q);
+      const matchDesc = p.description?.toLowerCase().includes(q);
+      if (!matchName && !matchDesc) return false;
+    }
+    return true;
+  });
 
   const handleDelete = async () => {
     try {

@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Bell, LogOut, ChevronDown, Settings, User, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSearch } from '../../context/SearchContext';
 
 export default function Navbar({ onToggleSidebar, sidebarOpen }) {
   const { user, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
   const [dropOpen, setDropOpen] = useState(false);
   const dropRef = useRef(null);
 
@@ -76,6 +78,8 @@ export default function Navbar({ onToggleSidebar, sidebarOpen }) {
         <Search size={13} style={{ color: '#97A0AF', flexShrink: 0 }} />
         <input
           placeholder="Search…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
           style={{
             border: 'none', background: 'transparent', outline: 'none',
             fontSize: 13, color: '#172B4D', width: '100%', fontFamily: 'inherit',

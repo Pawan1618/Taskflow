@@ -7,6 +7,7 @@ import TaskModal   from '../components/TaskModal';
 import { Plus, Columns, GanttChart, Trash2, LayoutGrid } from 'lucide-react';
 import { getUsers } from '../services/api';
 import { useLocation } from 'react-router-dom';
+import { useSearch } from '../context/SearchContext';
 
 const PRIO_FILTERS = ['ALL', 'HIGH', 'MEDIUM', 'LOW'];
 const PRIO_DOT = { HIGH: '#FF5630', MEDIUM: '#FF8B00', LOW: '#36B37E' };
@@ -14,6 +15,7 @@ const PRIO_DOT = { HIGH: '#FF5630', MEDIUM: '#FF8B00', LOW: '#36B37E' };
 export default function Tasks() {
   const toast    = useToast();
   const location = useLocation();
+  const { searchQuery } = useSearch();
 
   const [tasks,      setTasks]      = useState([]);
   const [projects,   setProjects]   = useState([]);
@@ -43,6 +45,13 @@ export default function Tasks() {
   const visibleTasks = tasks.filter(t => {
     if (selProject !== 'all' && String(t.project?.id) !== selProject) return false;
     if (filterPrio  !== 'ALL' && t.priority !== filterPrio)            return false;
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = t.title?.toLowerCase().includes(q);
+      const matchDesc = t.description?.toLowerCase().includes(q);
+      const matchProject = t.project?.name?.toLowerCase().includes(q);
+      if (!matchTitle && !matchDesc && !matchProject) return false;
+    }
     return true;
   });
 
