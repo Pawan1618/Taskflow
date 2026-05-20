@@ -2,48 +2,38 @@ import React, { useEffect, useState } from 'react';
 import { getProjects, deleteProject } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import ProjectModal from '../components/ProjectModal';
-import { Plus, FolderOpen, Pencil, Trash2, CheckSquare, ArrowRight } from 'lucide-react';
+import { Plus, FolderOpen, Pencil, Trash2, ArrowRight, CheckSquare, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const STATUS_BADGE = {
-  ACTIVE:    'active',
-  COMPLETED: 'completed',
-  ARCHIVED:  'archived',
+const PROJECT_COLORS = ['#0052CC','#00875A','#FF5630','#6554C0','#FF8B00','#00B8D9'];
+const avatarColor = (name = '') => PROJECT_COLORS[name.charCodeAt(0) % PROJECT_COLORS.length];
+
+const STATUS_CONFIG = {
+  ACTIVE:    { bg: '#E3FCEF', color: '#006644', label: 'Active' },
+  COMPLETED: { bg: '#EAE6FF', color: '#403294', label: 'Completed' },
+  ARCHIVED:  { bg: '#F4F5F7', color: '#42526E', label: 'Archived' },
 };
 
-const PROJECT_COLORS = [
-  '#0052CC','#00875A','#FF5630','#6554C0','#FF8B00','#00B8D9',
-];
-
-function avatarColor(name = '') {
-  return PROJECT_COLORS[name.charCodeAt(0) % PROJECT_COLORS.length];
-}
+const FILTERS = ['ALL', 'ACTIVE', 'COMPLETED', 'ARCHIVED'];
 
 export default function Projects() {
-  const toast = useToast();
+  const toast    = useToast();
   const navigate = useNavigate();
-  const [projects,   setProjects]   = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [modal,      setModal]      = useState(null);  // null | project obj
-  const [confirmDel, setConfirmDel] = useState(null);
+  const [projects,     setProjects]     = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [modal,        setModal]        = useState(null);
+  const [confirmDel,   setConfirmDel]   = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
 
   const load = async () => {
-    try {
-      const res = await getProjects();
-      setProjects(res.data);
-    } catch {
-      toast('Failed to load projects', 'error');
-    } finally {
-      setLoading(false);
-    }
+    try { const r = await getProjects(); setProjects(r.data); }
+    catch { toast('Failed to load projects', 'error'); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { load(); }, []);
 
-  const visible = filterStatus === 'ALL'
-    ? projects
-    : projects.filter(p => p.status === filterStatus);
+  const visible = filterStatus === 'ALL' ? projects : projects.filter(p => p.status === filterStatus);
 
   const handleDelete = async () => {
     try {
@@ -52,161 +42,258 @@ export default function Projects() {
       setConfirmDel(null);
       load();
     } catch (err) {
-      toast(err.response?.data?.message || 'Failed to delete project', 'error');
+      toast(err.response?.data?.message || 'Failed to delete', 'error');
     }
   };
 
   return (
     <>
-      {/* Header */}
-      <div className="tf-page-header">
-        <h1 className="tf-page-title">Projects</h1>
+      {/* ── Header ────────────────────────────────────────── */}
+      <div style={{
+        padding: '22px 28px 18px',
+        background: '#fff',
+        borderBottom: '1px solid #F0F1F3',
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12,
+      }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#172B4D', letterSpacing: '-0.3px' }}>Projects</h1>
+          <p style={{ fontSize: 13, color: '#97A0AF', marginTop: 2 }}>
+            {projects.length} project{projects.length !== 1 ? 's' : ''} total
+          </p>
+        </div>
 
-        {/* Status filter chips */}
-        <div className="tf-filter-bar">
-          {['ALL', 'ACTIVE', 'COMPLETED', 'ARCHIVED'].map(s => (
+        {/* Filter chips */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {FILTERS.map(s => (
             <button
               key={s}
-              className={`tf-chip ${filterStatus === s ? 'active-chip' : 'inactive'}`}
               onClick={() => setFilterStatus(s)}
+              style={{
+                padding: '5px 13px', borderRadius: 100,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                border: filterStatus === s ? '1.5px solid #4C9AFF' : '1.5px solid #E8EAED',
+                background: filterStatus === s ? '#DEEBFF' : '#fff',
+                color: filterStatus === s ? '#0052CC' : '#6B778C',
+                transition: 'all 0.15s',
+              }}
             >
               {s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
 
-        <div style={{ flex: 1 }} />
-
         <button
           id="btn-create-project"
-          className="tf-btn-primary"
           onClick={() => setModal({})}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '9px 16px', borderRadius: 8,
+            background: '#0052CC', color: '#fff', border: 'none',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            transition: 'background 0.15s',
+            boxShadow: '0 2px 8px rgba(0,82,204,0.3)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#0747A6'}
+          onMouseLeave={e => e.currentTarget.style.background = '#0052CC'}
         >
-          <Plus size={14} />
-          Create Project
+          <Plus size={15} /> New Project
         </button>
       </div>
 
-      <div className="tf-page-body">
+      {/* ── Body ──────────────────────────────────────────── */}
+      <div style={{ padding: '24px 28px', flex: 1, overflow: 'auto' }}>
         {loading ? (
-          <div className="tf-loading"><div className="tf-spinner" /><span>Loading projects…</span></div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12, padding: 60, flexDirection: 'column' }}>
+            <div className="tf-spinner" />
+            <span style={{ fontSize: 13, color: '#97A0AF' }}>Loading projects…</span>
+          </div>
         ) : visible.length === 0 ? (
-          <div className="tf-empty" style={{ marginTop: 60 }}>
-            <FolderOpen size={48} style={{ opacity: 0.2 }} />
-            <p style={{ fontSize: 14, fontWeight: 600, marginTop: 8 }}>No projects yet</p>
-            <button className="tf-btn-primary" style={{ marginTop: 12 }} onClick={() => setModal({})}>
-              <Plus size={13} /> Create your first project
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 40px', gap: 12 }}>
+            <div style={{ width: 72, height: 72, borderRadius: 20, background: '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FolderOpen size={34} color="#C1C7D0" />
+            </div>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#172B4D', margin: 0 }}>No projects yet</p>
+            <p style={{ fontSize: 13, color: '#97A0AF', margin: 0 }}>Create your first project to get started</p>
+            <button
+              onClick={() => setModal({})}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
+                padding: '10px 20px', borderRadius: 8,
+                background: '#0052CC', color: '#fff', border: 'none',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              <Plus size={14} /> Create Project
             </button>
           </div>
         ) : (
-          <div className="tf-project-grid">
-            {visible.map(p => (
-              <div
-                key={p.id}
-                className="tf-project-card"
-                onClick={() => navigate('/tasks', { state: { projectId: String(p.id) } })}
-              >
-                {/* Avatar */}
-                <div className="tf-project-avatar" style={{ background: avatarColor(p.name) }}>
-                  {p.name?.charAt(0).toUpperCase()}
-                </div>
-
-                {/* Name & status */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#172B4D', lineHeight: 1.3 }}>
-                    {p.name}
-                  </h3>
-                  <span className={`tf-badge ${STATUS_BADGE[p.status] || 'inactive'}`} style={{ flexShrink: 0 }}>
-                    {p.status}
-                  </span>
-                </div>
-
-                {/* Description */}
-                {p.description && (
-                  <p style={{
-                    fontSize: 12.5, color: '#6B778C', lineHeight: 1.5,
-                    marginBottom: 12, display: '-webkit-box',
-                    WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                  }}>
-                    {p.description}
-                  </p>
-                )}
-
-                <hr className="tf-divider" />
-
-                {/* Footer */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckSquare size={12} style={{ color: '#97A0AF' }} />
-                  <span style={{ fontSize: 11, color: '#97A0AF', flex: 1 }}>
-                    Created {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}
-                  </span>
-
-                  {/* Actions */}
-                  <button
-                    className="tf-btn-ghost"
-                    style={{ padding: '3px 6px' }}
-                    onClick={e => { e.stopPropagation(); setModal(p); }}
-                    title="Edit project"
-                  >
-                    <Pencil size={12} />
-                  </button>
-                  <button
-                    className="tf-btn-ghost danger"
-                    style={{ padding: '3px 6px' }}
-                    onClick={e => { e.stopPropagation(); setConfirmDel(p); }}
-                    title="Delete project"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                  <button
-                    className="tf-btn-ghost"
-                    style={{ padding: '3px 6px', color: '#0052CC' }}
-                    onClick={e => { e.stopPropagation(); navigate('/tasks', { state: { projectId: String(p.id) } }); }}
-                    title="Open board"
-                  >
-                    <ArrowRight size={12} />
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {visible.map(p => {
+              const sc  = STATUS_CONFIG[p.status] || STATUS_CONFIG.ACTIVE;
+              const col = avatarColor(p.name);
+              return (
+                <ProjectCard
+                  key={p.id}
+                  project={p}
+                  sc={sc}
+                  col={col}
+                  onOpen={() => navigate('/tasks', { state: { projectId: String(p.id) } })}
+                  onEdit={e => { e.stopPropagation(); setModal(p); }}
+                  onDelete={e => { e.stopPropagation(); setConfirmDel(p); }}
+                />
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Create/Edit Modal */}
+      {/* Modals */}
       {modal !== null && (
-        <ProjectModal
-          project={modal?.id ? modal : null}
-          onClose={() => setModal(null)}
-          onSaved={load}
-        />
+        <ProjectModal project={modal?.id ? modal : null} onClose={() => setModal(null)} onSaved={load} />
       )}
 
-      {/* Delete Confirm */}
       {confirmDel && (
-        <div className="tf-modal-overlay">
-          <div className="tf-modal" style={{ width: 380 }}>
-            <div className="tf-modal-header">
-              <span className="tf-modal-title">Delete Project</span>
-            </div>
-            <div className="tf-modal-body">
-              <p style={{ color: '#42526E', fontSize: 14 }}>
-                Delete <strong>"{confirmDel.name}"</strong>? All tasks in this project will also be deleted. This cannot be undone.
-              </p>
-            </div>
-            <div className="tf-modal-footer">
-              <button className="tf-btn-secondary" onClick={() => setConfirmDel(null)}>Cancel</button>
-              <button
-                className="tf-btn-primary"
-                style={{ background: '#FF5630' }}
-                onClick={handleDelete}
-              >
-                <Trash2 size={13} /> Delete Project
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteModal
+          title="Delete Project"
+          message={<>Delete <strong>"{confirmDel.name}"</strong>? All tasks will be deleted. This cannot be undone.</>}
+          onCancel={() => setConfirmDel(null)}
+          onConfirm={handleDelete}
+        />
       )}
     </>
+  );
+}
+
+function ProjectCard({ project: p, sc, col, onOpen, onEdit, onDelete }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onClick={onOpen}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: '#fff',
+        border: `1px solid ${hov ? col + '55' : '#E8EAED'}`,
+        borderRadius: 14,
+        padding: '20px',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        boxShadow: hov ? `0 6px 24px ${col}18` : '0 1px 4px rgba(0,0,0,0.04)',
+        transform: hov ? 'translateY(-2px)' : 'none',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Top color accent */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: col, borderRadius: '14px 14px 0 0' }} />
+
+      {/* Top row */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14, marginTop: 8 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12,
+          background: col, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 18, fontWeight: 800,
+        }}>
+          {p.name?.charAt(0).toUpperCase()}
+        </div>
+        <span style={{
+          fontSize: 11, fontWeight: 700,
+          background: sc.bg, color: sc.color,
+          padding: '3px 10px', borderRadius: 100,
+        }}>
+          {sc.label}
+        </span>
+      </div>
+
+      {/* Name */}
+      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#172B4D', marginBottom: 6, lineHeight: 1.3 }}>{p.name}</h3>
+
+      {/* Description */}
+      {p.description && (
+        <p style={{
+          fontSize: 12.5, color: '#6B778C', lineHeight: 1.55,
+          marginBottom: 14,
+          display: '-webkit-box', WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>
+          {p.description}
+        </p>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        paddingTop: 12, borderTop: '1px solid #F4F5F7', marginTop: p.description ? 0 : 12,
+      }}>
+        <Calendar size={11} color="#97A0AF" style={{ marginRight: 4 }} />
+        <span style={{ fontSize: 11, color: '#97A0AF', flex: 1 }}>
+          {p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+        </span>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <ActionBtn icon={<Pencil size={12} />} onClick={onEdit} color="#6B778C" hoverBg="#F4F5F7" />
+          <ActionBtn icon={<Trash2 size={12} />} onClick={onDelete} color="#FF5630" hoverBg="#FFEBE6" />
+          <ActionBtn icon={<ArrowRight size={12} />} onClick={onOpen} color={col} hoverBg={col + '20'} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActionBtn({ icon, onClick, color, hoverBg }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        width: 28, height: 28, borderRadius: 6,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: hov ? hoverBg : 'transparent',
+        border: 'none', cursor: 'pointer',
+        color, transition: 'background 0.15s',
+      }}
+    >
+      {icon}
+    </button>
+  );
+}
+
+function DeleteModal({ title, message, onCancel, onConfirm }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'rgba(9,30,66,0.54)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 1000,
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 14, width: 400, maxWidth: '90vw',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        overflow: 'hidden',
+      }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #F0F1F3' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#172B4D' }}>{title}</h3>
+        </div>
+        <div style={{ padding: '20px 24px' }}>
+          <p style={{ color: '#42526E', fontSize: 14, margin: 0, lineHeight: 1.6 }}>{message}</p>
+        </div>
+        <div style={{ padding: '14px 24px', borderTop: '1px solid #F0F1F3', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancel}
+            style={{ padding: '8px 16px', borderRadius: 8, border: '1.5px solid #DFE1E6', background: '#fff', fontSize: 13, fontWeight: 600, color: '#42526E', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#FF5630', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Trash2 size={13} /> Delete
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

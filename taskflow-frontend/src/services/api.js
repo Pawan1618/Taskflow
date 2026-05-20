@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: 'http://localhost:8081/api',
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -10,6 +11,12 @@ export const getUsers    = ()        => api.get('/users');
 export const createUser  = (data)    => api.post('/users', data);
 export const updateUser  = (id, data)=> api.put(`/users/${id}`, data);
 export const deleteUser  = (id)      => api.delete(`/users/${id}`);
+
+// ── Auth ─────────────────────────────────────────────────────────
+export const loginUser   = (data) => api.post('/auth/login', data);
+export const signupUser  = (data) => api.post('/auth/signup', data);
+export const logoutUser  = ()     => api.post('/auth/logout');
+export const getMe       = ()     => api.get('/auth/me');
 
 // ── Projects ─────────────────────────────────────────────────────
 export const getProjects    = ()        => api.get('/projects');
