@@ -16,37 +16,51 @@ const STATUS_STYLE = {
 
 function StatCard({ icon: Icon, label, value, color, bg, sub, onClick }) {
   const [hov, setHov] = useState(false);
+  const cardBg = bg || `${color}0D`; // Soft 5% - 8% opacity tint of the theme color
+  const cardBorder = `${color}20`;   // Subtle matching semantic border
+  const hoverBorder = `${color}60`;  // Higher contrast border on hover
+
   return (
     <div
       onClick={onClick}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        background: '#fff',
-        border: `1px solid ${hov ? color + '55' : '#E8EAED'}`,
+        background: cardBg,
+        border: `1px solid ${hov ? hoverBorder : cardBorder}`,
         borderRadius: 12,
         padding: '20px 22px',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'border-color 0.18s, box-shadow 0.18s, transform 0.18s',
-        boxShadow: hov ? `0 4px 20px ${color}18` : '0 1px 4px rgba(0,0,0,0.04)',
-        transform: hov && onClick ? 'translateY(-2px)' : 'none',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: hov ? `0 6px 20px ${color}1A` : '0 2px 6px rgba(0,0,0,0.02)',
+        transform: hov && onClick ? 'translateY(-3px)' : 'none',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{
-          width: 42, height: 42, borderRadius: 10,
-          background: bg || `${color}18`,
+          width: 40, height: 40, borderRadius: 10,
+          background: '#ffffff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
         }}>
           <Icon size={20} color={color} />
         </div>
-        {onClick && <ArrowRight size={15} color={hov ? color : '#C1C7D0'} style={{ transition: 'color 0.18s' }} />}
+        {onClick && (
+          <ArrowRight 
+            size={15} 
+            color={hov ? color : '#C1C7D0'} 
+            style={{ 
+              transition: 'all 0.18s ease', 
+              transform: hov ? 'translateX(2px)' : 'none' 
+            }} 
+          />
+        )}
       </div>
-      <div style={{ fontSize: 30, fontWeight: 800, color: '#172B4D', lineHeight: 1, letterSpacing: '-1px', marginBottom: 4 }}>
+      <div style={{ fontSize: 32, fontWeight: 800, color: '#172B4D', lineHeight: 1, letterSpacing: '-1px', marginBottom: 4 }}>
         {value}
       </div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#6B778C' }}>{label}</div>
-      {sub && <div style={{ fontSize: 11, color: '#97A0AF', marginTop: 3 }}>{sub}</div>}
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#42526E' }}>{label}</div>
+      {sub && <div style={{ fontSize: 11, color: '#6B778C', fontWeight: 500, marginTop: 4 }}>{sub}</div>}
     </div>
   );
 }
