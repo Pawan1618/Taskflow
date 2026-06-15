@@ -1,6 +1,7 @@
 package com.example.taskflow.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 
@@ -35,6 +36,12 @@ public class Project {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Owner: the user who created this project
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
     // One project has many tasks
     @JsonIgnore
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -59,13 +66,14 @@ public class Project {
     public Project() {}
 
     public Project(Long id, String name, String description, ProjectStatus status,
-                   LocalDateTime createdAt, LocalDateTime updatedAt, List<Task> tasks) {
+                   LocalDateTime createdAt, LocalDateTime updatedAt, User createdBy, List<Task> tasks) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.createdBy = createdBy;
         this.tasks = tasks;
     }
 
@@ -87,6 +95,9 @@ public class Project {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public User getCreatedBy() { return createdBy; }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
 
     public List<Task> getTasks() { return tasks; }
     public void setTasks(List<Task> tasks) { this.tasks = tasks; }
