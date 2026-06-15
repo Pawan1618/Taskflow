@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service layer for Task business logic.
@@ -26,9 +27,12 @@ public class TaskService {
     @Autowired
     private UserRepository userRepository;
 
-    // Retrieve all tasks
-    public List<Task> getAllTasks() {
-        return taskRepository.findAll();
+    // Retrieve all tasks belonging to projects owned by the given user
+    public List<Task> getAllTasks(Long userId) {
+        List<Long> projectIds = projectRepository.findByCreatedById(userId)
+                .stream().map(Project::getId).collect(Collectors.toList());
+        if (projectIds.isEmpty()) return List.of();
+        return taskRepository.findByProjectIdIn(projectIds);
     }
 
     // Retrieve a task by ID
