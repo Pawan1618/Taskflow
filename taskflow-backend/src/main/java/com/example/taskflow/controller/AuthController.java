@@ -49,7 +49,8 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         try {
             User user = userService.authenticate(loginRequest.getEmail(), loginRequest.getPassword());
-            String token = jwtUtil.generateToken(user.getId(), user.getEmail());
+            String roleStr = user.getRole() != null ? user.getRole().name() : "ROLE_USER";
+            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), roleStr);
             setJwtCookie(response, token);
             return ResponseEntity.ok(new AuthResponse("Login successful", user));
         } catch (RuntimeException e) {
@@ -62,7 +63,8 @@ public class AuthController {
     public ResponseEntity<AuthResponse> signup(@Valid @RequestBody User user, HttpServletResponse response) {
         try {
             User created = userService.createUser(user);
-            String token = jwtUtil.generateToken(created.getId(), created.getEmail());
+            String roleStr = created.getRole() != null ? created.getRole().name() : "ROLE_USER";
+            String token = jwtUtil.generateToken(created.getId(), created.getEmail(), roleStr);
             setJwtCookie(response, token);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new AuthResponse("User registered successfully", created));

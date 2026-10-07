@@ -15,6 +15,7 @@ import java.util.List;
  * REST Controller for Project management endpoints.
  * Base path: /api/projects
  * All endpoints require a valid JWT cookie (set by JwtAuthFilter).
+ * userId and userRole are extracted from request attributes for RBAC.
  */
 @RestController
 @RequestMapping("/api/projects")
@@ -28,12 +29,18 @@ public class ProjectController {
         return (Long) request.getAttribute("userId");
     }
 
+    /** Helper to extract userRole — defaults to ROLE_USER if not present */
+    private String getUserRole(HttpServletRequest request) {
+        String role = (String) request.getAttribute("userRole");
+        return (role != null) ? role : "ROLE_USER";
+    }
+
     /** Return 401 response when userId is missing */
     private ResponseEntity<?> unauthorized() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication required");
     }
 
-    // GET /api/projects — fetch all projects owned by the current user
+    // GET /api/projects — fetch projects (admin: all, user: own)
     @SuppressWarnings("unchecked")
     @GetMapping
     public ResponseEntity<List<Project>> getAllProjects(
@@ -41,22 +48,24 @@ public class ProjectController {
             HttpServletRequest request) {
         Long userId = getUserId(request);
         if (userId == null) return (ResponseEntity<List<Project>>) (ResponseEntity<?>) unauthorized();
+        String role = getUserRole(request);
         if (status != null) {
-            return ResponseEntity.ok(projectService.getProjectsByStatus(status, userId));
+            return ResponseEntity.ok(projectService.getProjectsByStatus(status, userId, role));
         }
-        return ResponseEntity.ok(projectService.getAllProjects(userId));
+        return ResponseEntity.ok(projectService.getAllProjects(userId, role));
     }
 
-    // GET /api/projects/{id} — fetch project by ID (must be owned by caller)
+    // GET /api/projects/{id} — fetch project by ID (admin: any, user: own)
     @SuppressWarnings("unchecked")
     @GetMapping("/{id}")
     public ResponseEntity<Project> getProjectById(@PathVariable Long id, HttpServletRequest request) {
         Long userId = getUserId(request);
         if (userId == null) return (ResponseEntity<Project>) (ResponseEntity<?>) unauthorized();
-        return ResponseEntity.ok(projectService.getProjectById(id, userId));
+        String role = getUserRole(request);
+        return ResponseEntity.ok(projectService.getProjectById(id, userId, role));
     }
 
-    // POST /api/projects — create a new project (owner set automatically)
+    // POST /api/projects — create a new project (owner set to caller automatically)
     @SuppressWarnings("unchecked")
     @PostMapping
     public ResponseEntity<Project> createProject(@Valid @RequestBody Project project,
@@ -67,7 +76,7 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // PUT /api/projects/{id} — update an existing project (must be owned by caller)
+    // PUT /api/projects/{id} — update a project (admin: any, user: own)
     @SuppressWarnings("unchecked")
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable Long id,
@@ -75,16 +84,18 @@ public class ProjectController {
                                                  HttpServletRequest request) {
         Long userId = getUserId(request);
         if (userId == null) return (ResponseEntity<Project>) (ResponseEntity<?>) unauthorized();
-        return ResponseEntity.ok(projectService.updateProject(id, project, userId));
+        String role = getUserRole(request);
+        return ResponseEntity.ok(projectService.updateProject(id, project, userId, role));
     }
 
-    // DELETE /api/projects/{id} — delete a project (must be owned by caller)
+    // DELETE /api/projects/{id} — delete a project (admin: any, user: own)
     @SuppressWarnings("unchecked")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id, HttpServletRequest request) {
         Long userId = getUserId(request);
         if (userId == null) return (ResponseEntity<Void>) (ResponseEntity<?>) unauthorized();
-        projectService.deleteProject(id, userId);
+        String role = getUserRole(request);
+        projectService.deleteProject(id, userId, role);
         return ResponseEntity.noContent().build();
     }
 }
