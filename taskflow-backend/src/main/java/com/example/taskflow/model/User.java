@@ -37,6 +37,10 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.ROLE_USER;
+
     // One user can be assigned many tasks
     @JsonIgnore
     @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -45,16 +49,25 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (role == null) {
+            role = Role.ROLE_USER;
+        }
+    }
+
+    public enum Role {
+        ROLE_USER,
+        ROLE_ADMIN
     }
 
     // ── Constructors ──────────────────────────────────────────────────
     public User() {}
 
-    public User(Long id, String name, String email, String password, LocalDateTime createdAt, List<Task> tasks) {
+    public User(Long id, String name, String email, String password, Role role, LocalDateTime createdAt, List<Task> tasks) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
+        this.role = role != null ? role : Role.ROLE_USER;
         this.createdAt = createdAt;
         this.tasks = tasks;
     }
@@ -71,6 +84,9 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

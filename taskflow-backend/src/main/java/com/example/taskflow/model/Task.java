@@ -54,6 +54,12 @@ public class Task {
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
 
+    // Creator of the task
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -91,6 +97,22 @@ public class Task {
         this.assignedTo = assignedTo;
     }
 
+    public Task(Long id, String title, String description, TaskStatus status, TaskPriority priority,
+                LocalDate dueDate, LocalDateTime createdAt, LocalDateTime updatedAt,
+                Project project, User assignedTo, User createdBy) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.priority = priority;
+        this.dueDate = dueDate;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.project = project;
+        this.assignedTo = assignedTo;
+        this.createdBy = createdBy;
+    }
+
     // ── Getters & Setters ─────────────────────────────────────────────
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -121,4 +143,7 @@ public class Task {
 
     public User getAssignedTo() { return assignedTo; }
     public void setAssignedTo(User assignedTo) { this.assignedTo = assignedTo; }
+
+    public User getCreatedBy() { return createdBy; }
+    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
 }

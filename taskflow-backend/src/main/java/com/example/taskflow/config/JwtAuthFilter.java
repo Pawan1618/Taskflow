@@ -38,8 +38,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (jwtCookie.isPresent() && jwtUtil.validateToken(jwtCookie.get().getValue())) {
                 Long userId = jwtUtil.getUserIdFromToken(jwtCookie.get().getValue());
-                // Expose userId to the rest of the request chain
+                String userRole = jwtUtil.getRoleFromToken(jwtCookie.get().getValue());
+                // Expose userId and userRole to the rest of the request chain
                 request.setAttribute("userId", userId);
+                request.setAttribute("userRole", userRole);
             }
         }
 

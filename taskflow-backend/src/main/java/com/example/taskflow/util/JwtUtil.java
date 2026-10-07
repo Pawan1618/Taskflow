@@ -17,9 +17,14 @@ public class JwtUtil {
     private static final long EXPIRATION_TIME = 86400000; // 1 day in ms
 
     public String generateToken(Long userId, String email) {
+        return generateToken(userId, email, "ROLE_USER");
+    }
+
+    public String generateToken(Long userId, String email, String role) {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("email", email)
+                .claim("role", role != null ? role : "ROLE_USER")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key)
@@ -33,6 +38,20 @@ public class JwtUtil {
                 .parseSignedClaims(token)
                 .getPayload();
         return Long.parseLong(claims.getSubject());
+    }
+
+    public String getRoleFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            String role = claims.get("role", String.class);
+            return (role != null && !role.isEmpty()) ? role : "ROLE_USER";
+        } catch (Exception e) {
+            return "ROLE_USER";
+        }
     }
 
     public boolean validateToken(String token) {
