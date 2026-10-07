@@ -1,17 +1,21 @@
 # =============================================
-# Stage 1: Build — uses Maven + JDK 21 to compile and package
+# Stage 1: Build — full JDK to compile the JAR
 # =============================================
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency descriptors first for layer caching
+# Copy Maven wrapper and pom first (layer cache for dependencies)
 COPY pom.xml .
-COPY src ./src
+COPY .mvn .mvn
+COPY mvnw .
 
-# Build the JAR, skipping tests (tests are run in CI pipeline)
-RUN apk add --no-cache maven && \
-    mvn clean package -DskipTests
+# Make mvnw executable and download dependencies
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+
+# Copy source and build, skipping tests (tests run in CI separately)
+COPY src ./src
+RUN ./mvnw package -DskipTests -B
 
 # =============================================
 # Stage 2: Run — lightweight JRE-only image

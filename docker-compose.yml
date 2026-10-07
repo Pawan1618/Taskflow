@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # The Database Service
@@ -14,6 +14,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow_user -d taskflowdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   # The Backend Service
@@ -34,7 +39,8 @@ services:
       - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   # The Frontend Service
