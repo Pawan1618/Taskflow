@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 // Determine API base URL dynamically:
 // 1. Explicit environment variable (if set at build time)
 // 2. Relative path '/api' when running on Cloud IP / domain behind Nginx single-port proxy
