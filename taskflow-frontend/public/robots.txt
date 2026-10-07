@@ -1,0 +1,9 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow internal API endpoints from search engines
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://taskflow.app/sitemap.xml
