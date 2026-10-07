@@ -315,7 +315,7 @@ export default function Login() {
         <div style={S.leftOrb2} />
 
         <div style={S.logo}>
-          <div style={S.logoIcon}>TF</div>
+          <img src="/logo.svg" alt="TaskFlow Logo" style={{ width: 36, height: 36, borderRadius: 8 }} />
           <span style={S.logoText}>TaskFlow</span>
         </div>
 

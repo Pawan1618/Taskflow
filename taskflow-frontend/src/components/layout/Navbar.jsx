@@ -126,12 +126,7 @@ export default function Navbar({ onToggleSidebar, sidebarOpen }) {
       {/* ── Brand (visible when sidebar is closed) ────────── */}
       {!sidebarOpen && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 26, height: 26, borderRadius: 6,
-            background: '#0052CC',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 800, color: '#fff',
-          }}>TF</div>
+          <img src="/logo.svg" alt="TaskFlow Logo" style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0 }} />
           <span style={{ fontSize: 14, fontWeight: 700, color: '#172B4D', letterSpacing: '0.2px' }}>
             TaskFlow
           </span>

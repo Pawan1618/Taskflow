@@ -93,15 +93,7 @@ export default function Sidebar({ open, onClose }) {
           flexShrink: 0,
           gap: 10,
         }}>
-          <div style={{
-            width: 30, height: 30,
-            background: '#0052CC', borderRadius: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '13px', fontWeight: '800', color: '#fff',
-            flexShrink: 0,
-          }}>
-            TF
-          </div>
+          <img src="/logo.svg" alt="TaskFlow Logo" style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }} />
           <span style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '0.3px', flex: 1 }}>
             TaskFlow
           </span>
