@@ -1,7 +1,20 @@
-import axios from 'axios';
+// Determine API base URL dynamically:
+// 1. Explicit environment variable (if set at build time)
+// 2. Relative path '/api' when running on Cloud IP / domain behind Nginx single-port proxy
+// 3. Fallback to 'http://localhost:8081/api' for local dev
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  // If hosted on Cloud IP / domain (not local dev server at localhost:5173/5174)
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return `${window.location.origin}/api`;
+  }
+  return 'http://localhost:8081/api';
+};
 
 const api = axios.create({
-  baseURL: 'http://localhost:8081/api',
+  baseURL: getBaseURL(),
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
