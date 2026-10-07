@@ -167,9 +167,11 @@ body {
 /* ── Page Shell ──────────────────────────────────────────────── */
 .tf-page {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;   /* pages like Dashboard need vertical scroll */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .tf-page-header {
@@ -191,6 +193,8 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;  /* needed so flex child can shrink and gantt gets a real bounded height */
+  overflow: hidden;
 }
 
 /* ── View Toggle ─────────────────────────────────────────────── */
@@ -489,17 +493,105 @@ body {
   border: 1px solid var(--jira-border);
   border-radius: 4px;
   background: #fff;
+  min-height: 0;
 }
 
-.gantt-header-row {
+/* ── Sticky header row ── */
+.gantt-header-sticky {
   display: flex;
-  background: #F4F5F7;
-  border-bottom: 1px solid var(--jira-border);
+  flex-direction: row;
   position: sticky;
   top: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  background: #0C2040;
+  border-bottom: 1px solid var(--jira-border);
+}
+
+/* Frozen "Task" label inside the sticky header */
+.gantt-label-col--header {
+  background: #0C2040;
+  color: #B8D0EB;
+  border-right: 1px solid #1a3a5c;
+  /* dimensions come from .gantt-label-col below */
+}
+
+/* Header date area — overflow hidden (body scroll drives it via JS) */
+.gantt-header-dates {
+  flex: 1;
+  overflow-x: hidden;   /* scroll is driven programmatically from the body */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Body (frozen labels + scrollable timeline) ── */
+.gantt-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow-y: auto;     /* vertical scroll for many tasks */
+  min-height: 0;
+}
+
+/* Frozen label column (left side of body) */
+.gantt-labels-col {
+  width: 220px;
+  min-width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--jira-border);
+  background: #fff;
+  /* sticks horizontally even when the timeline scrolls */
+  position: sticky;
+  left: 0;
   z-index: 10;
 }
 
+/* Each row in the frozen label column */
+.gantt-row-label-cell {
+  width: 220px;
+  min-width: 220px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--jira-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  min-height: 44px;
+  border-bottom: 1px solid #F4F5F7;
+  box-sizing: border-box;
+  transition: background 0.1s;
+}
+
+.gantt-row-label-cell:hover { background: #FAFBFC; }
+
+/* Scrollable timeline area */
+.gantt-timeline-scroll {
+  flex: 1;
+  overflow-x: auto;    /* THE single horizontal scroll */
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #C1C7D0 #F4F5F7;
+}
+
+.gantt-timeline-scroll::-webkit-scrollbar { height: 8px; }
+.gantt-timeline-scroll::-webkit-scrollbar-track { background: #F4F5F7; }
+.gantt-timeline-scroll::-webkit-scrollbar-thumb { background: #C1C7D0; border-radius: 4px; }
+
+/* Each row in the timeline (sits inside the scrollable canvas) */
+.gantt-timeline-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-height: 44px;
+  border-bottom: 1px solid #F4F5F7;
+  box-sizing: border-box;
+  transition: background 0.1s;
+}
+
+.gantt-timeline-row:hover { background: #FAFBFC; }
+
+/* ── Shared classes still used ── */
 .gantt-label-col {
   width: 220px;
   min-width: 220px;
@@ -521,7 +613,6 @@ body {
 
 .gantt-days-header {
   display: flex;
-  border-bottom: 1px solid var(--jira-border);
   background: #F4F5F7;
   min-height: 40px;
   align-items: center;
@@ -546,61 +637,15 @@ body {
 
 .gantt-day-cell.weekend { color: var(--jira-text-mute); }
 
-.gantt-rows {
-  overflow-y: auto;
-  flex: 1;
-}
-
-.gantt-row {
-  display: flex;
-  border-bottom: 1px solid #F4F5F7;
-  align-items: center;
-  min-height: 44px;
-  transition: background 0.1s;
-}
-
-.gantt-row:hover { background: #FAFBFC; }
-
-.gantt-row-label {
-  width: 220px;
-  min-width: 220px;
-  padding: 8px 16px;
-  border-right: 1px solid var(--jira-border);
-  font-size: 13px;
-  color: var(--jira-text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.gantt-row-label-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.gantt-row-grid {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  min-width: 0;
-}
-
 .gantt-grid-cell {
   min-width: 36px;
   width: 36px;
   height: 100%;
+  min-height: 44px;
   border-right: 1px solid #F4F5F7;
   flex-shrink: 0;
+  position: relative;
 }
-
-.gantt-grid-cell.weekend { background: #FAFBFC; }
-.gantt-grid-cell.today-col { background: #E9F2FF; }
 
 .gantt-bar {
   position: absolute;
@@ -653,6 +698,64 @@ body {
   background: #FF5630;
   border-radius: 50%;
 }
+
+/* Legacy classes kept for compatibility */
+.gantt-header-row {
+  display: flex;
+  background: #F4F5F7;
+  border-bottom: 1px solid var(--jira-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.gantt-rows {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.gantt-row {
+  display: flex;
+  border-bottom: 1px solid #F4F5F7;
+  align-items: center;
+  min-height: 44px;
+  transition: background 0.1s;
+}
+
+.gantt-row:hover { background: #FAFBFC; }
+
+.gantt-row-label {
+  width: 220px;
+  min-width: 220px;
+  padding: 8px 16px;
+  border-right: 1px solid var(--jira-border);
+  font-size: 13px;
+  color: var(--jira-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.gantt-row-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.gantt-row-grid {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 0;
+}
+
+.gantt-grid-cell.weekend { background: #FAFBFC; }
+.gantt-grid-cell.today-col { background: #E9F2FF; }
 
 /* ── Modal ───────────────────────────────────────────────────── */
 .tf-modal-overlay {

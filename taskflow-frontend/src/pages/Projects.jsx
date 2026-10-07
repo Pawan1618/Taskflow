@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getProjects, deleteProject } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import ProjectModal from '../components/ProjectModal';
-import { Plus, FolderOpen, Pencil, Trash2, ArrowRight, CheckSquare, Calendar } from 'lucide-react';
+import { Plus, FolderOpen, Pencil, Trash2, ArrowRight, CheckSquare, Calendar, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../context/SearchContext';
 
@@ -20,7 +20,7 @@ const FILTERS = ['ALL', 'ACTIVE', 'COMPLETED', 'ARCHIVED'];
 export default function Projects() {
   const toast    = useToast();
   const navigate = useNavigate();
-  const { searchQuery } = useSearch();
+  const { searchQuery, setSearchQuery } = useSearch();
   const [projects,     setProjects]     = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [modal,        setModal]        = useState(null);
@@ -121,21 +121,39 @@ export default function Projects() {
         ) : visible.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 40px', gap: 12 }}>
             <div style={{ width: 72, height: 72, borderRadius: 20, background: '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FolderOpen size={34} color="#C1C7D0" />
+              {searchQuery.trim() ? <Search size={34} color="#C1C7D0" /> : <FolderOpen size={34} color="#C1C7D0" />}
             </div>
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#172B4D', margin: 0 }}>No projects yet</p>
-            <p style={{ fontSize: 13, color: '#97A0AF', margin: 0 }}>Create your first project to get started</p>
-            <button
-              onClick={() => setModal({})}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
-                padding: '10px 20px', borderRadius: 8,
-                background: '#0052CC', color: '#fff', border: 'none',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}
-            >
-              <Plus size={14} /> Create Project
-            </button>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#172B4D', margin: 0 }}>
+              {searchQuery.trim() ? `No projects matching "${searchQuery}"` : 'No projects yet'}
+            </p>
+            <p style={{ fontSize: 13, color: '#97A0AF', margin: 0 }}>
+              {searchQuery.trim() ? 'Check your search query or clear the filter' : 'Create your first project to get started'}
+            </p>
+            {searchQuery.trim() ? (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
+                  padding: '9px 18px', borderRadius: 8,
+                  background: '#F4F5F7', color: '#42526E', border: '1.5px solid #DFE1E6',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                Clear Search
+              </button>
+            ) : (
+              <button
+                onClick={() => setModal({})}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
+                  padding: '10px 20px', borderRadius: 8,
+                  background: '#0052CC', color: '#fff', border: 'none',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                <Plus size={14} /> Create Project
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>

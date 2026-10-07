@@ -99,8 +99,12 @@ export default function TaskModal({ task, projectId, projects, users, onClose, o
               <div className="tf-form-group">
                 <label className="tf-label">Status</label>
                 <select className="tf-select" value={form.status} onChange={e => set('status', e.target.value)}>
-                  <option value="TODO">To Do</option>
-                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="TODO" disabled={task?.status === 'IN_PROGRESS' || task?.status === 'DONE'}>
+                    To Do {task?.status === 'IN_PROGRESS' || task?.status === 'DONE' ? '(Cannot move back)' : ''}
+                  </option>
+                  <option value="IN_PROGRESS" disabled={task?.status === 'DONE'}>
+                    In Progress {task?.status === 'DONE' ? '(Cannot move back)' : ''}
+                  </option>
                   <option value="DONE">Done</option>
                 </select>
               </div>

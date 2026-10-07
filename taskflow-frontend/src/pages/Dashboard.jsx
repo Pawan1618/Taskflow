@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { getTasks, getProjects } from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { CheckSquare, FolderKanban, TrendingUp, AlertCircle, Clock, ArrowRight, Plus } from 'lucide-react';
+import { CheckSquare, FolderKanban, TrendingUp, AlertCircle, Clock, ArrowRight, Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSearch } from '../context/SearchContext';
 import dayjs from 'dayjs';
 
 const PRIO_COLOR  = { HIGH: '#FF5630', MEDIUM: '#FF8B00', LOW: '#36B37E' };
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const toast    = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
   const [tasks,    setTasks]    = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -94,7 +96,17 @@ export default function Dashboard() {
   const overdue    = tasks.filter(t => t.dueDate && dayjs(t.dueDate).isBefore(today, 'day') && t.status !== 'DONE').length;
   const activeProj = projects.filter(p => p.status === 'ACTIVE').length;
   const pct        = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
-  const recentTasks = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
+  
+  const cleanQ = searchQuery.trim().toLowerCase();
+  const recentTasks = [...tasks]
+    .filter(t => {
+      if (!cleanQ) return true;
+      return t.title?.toLowerCase().includes(cleanQ) ||
+             t.description?.toLowerCase().includes(cleanQ) ||
+             t.project?.name?.toLowerCase().includes(cleanQ);
+    })
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 6);
 
   const greeting = today.hour() < 12 ? 'Good morning' : today.hour() < 17 ? 'Good afternoon' : 'Good evening';
 
@@ -133,6 +145,42 @@ export default function Dashboard() {
       </div>
 
       <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24, flex: 1, overflow: 'auto' }}>
+
+        {/* ── Search Filter Banner ─────────────────────────── */}
+        {cleanQ && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 18px', background: '#DEEBFF', borderRadius: 10,
+            border: '1.5px solid #0052CC', color: '#0747A6', fontSize: 13, fontWeight: 600,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Search size={16} color="#0052CC" />
+              <span>Filtering Dashboard for: "<strong>{searchQuery}</strong>" ({recentTasks.length} matching tasks)</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => navigate('/tasks')}
+                style={{
+                  background: '#0052CC', color: '#fff', border: 'none',
+                  borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 700,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                }}
+              >
+                View on Board <ArrowRight size={13} />
+              </button>
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  background: 'transparent', border: '1px solid #4C9AFF', color: '#0052CC',
+                  borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Clear Search
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Stat Cards ──────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 14 }}>

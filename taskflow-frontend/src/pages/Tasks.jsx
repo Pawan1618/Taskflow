@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext';
 import KanbanBoard from '../components/KanbanBoard';
 import GanttView   from '../components/GanttView';
 import TaskModal   from '../components/TaskModal';
-import { Plus, Columns, GanttChart, Trash2, LayoutGrid } from 'lucide-react';
+import { Plus, Columns, GanttChart, Trash2, LayoutGrid, Search } from 'lucide-react';
 import { getUsers } from '../services/api';
 import { useLocation } from 'react-router-dom';
 import { useSearch } from '../context/SearchContext';
@@ -15,7 +15,7 @@ const PRIO_DOT = { HIGH: '#FF5630', MEDIUM: '#FF8B00', LOW: '#36B37E' };
 export default function Tasks() {
   const toast    = useToast();
   const location = useLocation();
-  const { searchQuery } = useSearch();
+  const { searchQuery, setSearchQuery } = useSearch();
 
   const [tasks,      setTasks]      = useState([]);
   const [projects,   setProjects]   = useState([]);
@@ -41,6 +41,19 @@ export default function Tasks() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Sync external navigation state from search or project cards
+  useEffect(() => {
+    if (location.state?.projectId) {
+      setSelProject(String(location.state.projectId));
+    }
+    if (location.state?.taskId && tasks.length > 0) {
+      const found = tasks.find(t => t.id === location.state.taskId);
+      if (found) {
+        setModal({ task: found });
+      }
+    }
+  }, [location.state, tasks]);
 
   const visibleTasks = tasks.filter(t => {
     if (selProject !== 'all' && String(t.project?.id) !== selProject) return false;
@@ -74,13 +87,14 @@ export default function Tasks() {
   const pct    = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* ── Header ──────────────────────────────────────── */}
       <div style={{
         padding: '16px 28px',
         background: '#fff',
         borderBottom: '1px solid #F0F1F3',
         display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10,
+        flexShrink: 0,
       }}>
         {/* Title */}
         <h1 style={{ fontSize: 20, fontWeight: 800, color: '#172B4D', letterSpacing: '-0.3px', marginRight: 4 }}>
@@ -183,6 +197,7 @@ export default function Tasks() {
         background: '#fff',
         borderBottom: '1px solid #F0F1F3',
         padding: '0 28px',
+        flexShrink: 0,
       }}>
         {[
           { val: total,  label: 'Total',       color: '#172B4D' },
@@ -218,11 +233,56 @@ export default function Tasks() {
       </div>
 
       {/* ── Main board area ──────────────────────────────── */}
-      <div className="tf-page-body" style={{ background: '#F8F9FA', padding: '16px 28px' }}>
+      <div className="tf-page-body" style={{ background: '#F8F9FA', padding: '16px 28px', overflow: 'hidden', minHeight: 0 }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12, flexDirection: 'column' }}>
             <div className="tf-spinner" />
             <span style={{ fontSize: 13, color: '#97A0AF' }}>Loading tasks…</span>
+          </div>
+        ) : visibleTasks.length === 0 && searchQuery.trim() !== '' ? (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            height: '100%', gap: 14, textAlign: 'center', padding: '40px 20px',
+          }}>
+            <div style={{
+              width: 60, height: 60, borderRadius: 16, background: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 12px rgba(9,30,66,0.06)', border: '1px solid #E8EAED',
+            }}>
+              <Search size={28} color="#97A0AF" />
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#172B4D' }}>
+              No tasks found matching "{searchQuery}"
+            </div>
+            <p style={{ fontSize: 13, color: '#6B778C', maxWidth: 420, margin: 0, lineHeight: 1.5 }}>
+              {selProject !== 'all'
+                ? 'You are searching within the selected project. Try searching across all projects.'
+                : 'Check for typos or try searching by title, description, or project name.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              {selProject !== 'all' && (
+                <button
+                  onClick={() => setSelProject('all')}
+                  style={{
+                    padding: '8px 16px', borderRadius: 8,
+                    background: '#0052CC', color: '#fff', border: 'none',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  Search All Projects
+                </button>
+              )}
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  padding: '8px 16px', borderRadius: 8,
+                  background: '#fff', color: '#42526E', border: '1.5px solid #DFE1E6',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Clear Search
+              </button>
+            </div>
           </div>
         ) : view === 'kanban' ? (
           <KanbanBoard
@@ -280,6 +340,6 @@ export default function Tasks() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
